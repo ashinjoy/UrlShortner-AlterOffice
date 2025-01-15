@@ -21,3 +21,8 @@ export interface INewClick {
   user_agent: string;
 }
 
+export interface IAnalyticsService{
+    analyticsServiceOfSpecificUrl(alias:string):void
+    analyticsServiceOfSpecificTopic(topic:string):void
+    overallAnalytics():void
+}
