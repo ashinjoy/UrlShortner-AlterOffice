@@ -5,7 +5,7 @@ export interface IUrl extends Document {
   longUrl: string;
   short: string;
   topic: string;
-  createdAt?:Date
+  createdAt?: Date;
   // totalClicks:number
 }
 export interface INewUrl {
@@ -14,17 +14,26 @@ export interface INewUrl {
   topic: string | undefined;
 }
 
-export interface IUrlBody{
-    longUrl:string,
-    customAlias:string | undefined
-    topic:string | undefined
+export interface IUrlBody {
+  longUrl: string;
+  customAlias: string | undefined;
+  topic: string | undefined;
 }
 
-export interface IUrlServiceData{
-    shortUrl:string,
-    createdAt?:Date
+export interface IUrlServiceData {
+  shortUrl: string;
+  createdAt?: Date;
 }
 
-export interface IUrlService{
-    createShortUrlService(urlBody:IUrlBody):Promise<IUrlServiceData>
+export interface IClickMetaData {
+  short: string;
+  clientIp: string ;
+  user_agent: string;
+  deviceName: string;
+  os: string;
+}
+
+export interface IUrlService {
+  createShortUrlService(urlBody: IUrlBody): Promise<IUrlServiceData>;
+  redirectUrlService(data: IClickMetaData): Promise<string>;
 }

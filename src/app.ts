@@ -8,5 +8,6 @@ app.use(express.json());
 app.use(morgan('dev'))
 app.use('/api/v1/user/',authRouter)
 app.use('/api/v1/url/',urlRouter)
+app.use('/',urlRouter)
 
 export { app };

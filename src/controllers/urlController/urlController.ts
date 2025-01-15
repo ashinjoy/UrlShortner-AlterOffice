@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-import { urlModel } from "../../models/urlModel";
-import { analyticsModel } from "../../models/redirectLogs";
+
 import useragent from "useragent";
 import { IUrlService } from "../../interface/urInterface";
 import { BadRequestError } from "../../errors/badrequest";
@@ -27,13 +26,11 @@ export class UrlController {
         topic,
       });
       const shortUrl = `${req.protocol}://${req.headers.host}/${urlData.shortUrl}`;
-      res
-        .status(200)
-        .json({
-          message: "success",
-          shortUrl: shortUrl,
-          createdAt: urlData.createdAt,
-        });
+      res.status(200).json({
+        message: "success",
+        shortUrl: shortUrl,
+        createdAt: urlData.createdAt,
+      });
     } catch (error) {
       console.error(error);
       next(error);
@@ -41,37 +38,30 @@ export class UrlController {
   }
   async redirectUrl(req: Request, res: Response, next: NextFunction) {
     try {
-      const { short } = req.params;
-      console.log(short);
-      const shortUrl = `${req.protocol}://${req.headers.host}/${short}`;
-      const response = await urlModel.findOne({ shortUrl: shortUrl });
+      const { short } = req.params as { short: string };
+      if (!short) {
+        throw new BadRequestError("Bad request");
+      }
 
-      // Get client IP address
-      const clientIp =
+      let clientIp =
         req.headers["x-forwarded-for"] ||
         req.connection.remoteAddress ||
         req.socket.remoteAddress;
+        if(Array.isArray(clientIp)){
+          clientIp = clientIp[0]
+        }
       const agent = useragent.parse(req.headers["user-agent"]);
-      const deviceName = agent.device.family || "Unknown Device"; // e.g., "Desktop" or specific device info
-      const os = agent.os.toString(); // e.g., "Windows 10"
-
-      // Log the details (optional)
-      console.log(`Client IP: ${clientIp}`);
-      console.log(`Device Name: ${deviceName}`);
-      console.log(`OS: ${os}`);
-      const userAgent = req.headers["user-agent"];
-      urlModel.findOneAndUpdate({ shortUrl }, { $inc: { totalClicks: 1 } });
-      analyticsModel.create({
-        url_id: response?._id,
-        os_name: os,
-        device_name: deviceName,
-        ip_address: clientIp,
-        user_agent: userAgent,
+      const deviceName = agent.device.family || "Unknown Device";
+      const os = agent.os.toString();
+      const user_agent = req.headers["user-agent"] || "unknown agent";
+      const getLongUrl = await this.urlService.redirectUrlService({
+        short,
+        clientIp : clientIp || "ip not available",
+        deviceName,
+        user_agent,
+        os,
       });
-      if (!response?.longUrl) {
-        throw new Error("err");
-      }
-      res.redirect(response.longUrl);
+      res.redirect(getLongUrl);
     } catch (error) {
       console.error(error);
       next(error);
