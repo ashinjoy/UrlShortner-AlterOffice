@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",                        // Specify ECMAScript target version
+    "module": "CommonJS",                      // Specify module code generation
+    "rootDir": "./src",                        // Specify the root folder
+    "outDir": "./dist",                        // Redirect output structure
+    "strict": true,                            // Enable strict type checking
+    "esModuleInterop": true,                   // Allow default imports from CommonJS modules
+    "skipLibCheck": true,                      // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true   // Ensure file name casing consistency
+  },
+  "include": ["src/**/*"],                     // Specify files to include
+  "exclude": ["node_modules", "dist"]          // Specify files to exclude
+}
