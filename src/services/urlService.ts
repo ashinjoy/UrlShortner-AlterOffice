@@ -5,9 +5,8 @@ import {
   IUrlServiceData,
 } from "../interface/urInterface";
 import { IUrlRepository } from "../interface/urlRepositoryInterface";
-import { urlRouter } from "../routes/url/url";
 import { IAnalyticsRepository } from "../interface/analyticsRepository";
-import { IClick } from "../interface/redirectInterface";
+import { redisClient } from "../config/redis";
 
 export class UrlService {
   urlRepository: IUrlRepository;
@@ -45,17 +44,35 @@ export class UrlService {
   }
   async redirectUrlService(data: IClickMetaData): Promise<string> {
     try {
-      const getOriginalUrl = await this.urlRepository.getUrlByShort(data.short);
+      const isCached = await redisClient.get(data.short);
+      let parsedJSONCache;
+      if (!isCached) {
+        const getOriginalUrl = await this.urlRepository.getUrlByShort(
+          data.short
+        );
+        const cachedData = {
+          _id: getOriginalUrl._id,
+          topic: getOriginalUrl.topic,
+          longUrl: getOriginalUrl.longUrl,
+        };
+        await redisClient.set(data.short, JSON.stringify(cachedData), {
+          EX: 3600,
+        });
+        parsedJSONCache = { ...getOriginalUrl._doc };
+      } else {
+        parsedJSONCache = JSON.parse(isCached);
+      }
+      console.log(parsedJSONCache);
       const createClicksMetaData = await this.analyticsRepository.createClicks({
-        url_id: getOriginalUrl._id,
+        url_id: parsedJSONCache._id,
         short: data.short,
-        topic: getOriginalUrl.topic,
+        topic: parsedJSONCache.topic,
         os_name: data.os,
         device_name: data.deviceName,
         ip_address: data.clientIp,
         user_agent: data.user_agent,
       });
-      return getOriginalUrl.longUrl;
+      return parsedJSONCache.longUrl;
     } catch (error) {
       console.error(error);
       throw error;

@@ -6,6 +6,7 @@ import { urlModel } from '../../models/urlModel'
 import { rateLimiter } from '../../middlwares/rateLimiter'
 import { AnalyticsRepository } from '../../repository/analyticsRepository'
 import { analyticsModel } from '../../models/redirectLogs'
+import { AuthMiddleware } from '../../middlwares/authMiddleware'
 
 const urlRouter = express.Router()
 
@@ -14,7 +15,8 @@ const analyticsRepository = new AnalyticsRepository(analyticsModel)
 const urlService = new UrlService(urlRepository,analyticsRepository)
 
 const urlController =  new UrlController(urlService)
+
 urlRouter.get('/:short',urlController.redirectUrl.bind(urlController))
-urlRouter.post('/shorten',rateLimiter,urlController.createShortUrl.bind(urlController))
+urlRouter.post('/shorten',AuthMiddleware.isAuthenticated,rateLimiter,urlController.createShortUrl.bind(urlController))
 
 export {urlRouter}

@@ -20,16 +20,20 @@ export class AuthController {
   }
   async googleAuth(req: Request, res: Response, next: NextFunction) {
     try {
+      console.log("hello guyzz");
+      
       const { code } = req.query as { code: string };
       if (!code) {
         throw new BadRequestError("Bad Request");
       }
       // const authInfo = await authenticateUser(code);
-     const authInfo =  this.authService.authenticateUser(code)
+     const authInfo =  await this.authService.authenticateUser(code)
+     console.log(authInfo);
+     
       res.status(200).json({
         message: "Authentication successful",
         user: authInfo.userInfo,
-        tokens: authInfo.tokens,
+        tokens: authInfo.token,
       });
     } catch (error) {
       console.error(error);

@@ -13,6 +13,6 @@ const authController = new AuthController(authService);
 
 
 authRouter.get("/auth/google", authController.auth.bind(authController));
-authRouter.get("/auth/google/callback", authController.googleAuth.bind(authController));
+authRouter.get("/auth/google/callback",authController.googleAuth.bind(authController));
 
 export { authRouter };
