@@ -25,7 +25,7 @@ export class UrlController {
         customAlias,
         topic,
       });
-      const shortUrl = `${req.protocol}://${req.headers.host}/${urlData.shortUrl}`;
+      const shortUrl = `${req.protocol}://${req.headers.host}/api/v1/url/${urlData.shortUrl}`;
       res.status(200).json({
         message: "success",
         shortUrl: shortUrl,
