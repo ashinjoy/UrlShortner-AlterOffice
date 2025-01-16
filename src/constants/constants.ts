@@ -1,2 +1,2 @@
-export const REDIRECT_URI = "http://localhost:3000/api/v1/user/auth/google/callback"
+export const REDIRECT_URI = "https://shortyurl-2zep.onrender.com/api/v1/user/auth/google/callback"
 export const SCOPES = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'];
