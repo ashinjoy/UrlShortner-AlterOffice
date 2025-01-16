@@ -18,8 +18,8 @@ app.set("trust proxy", true);
 app.use('/api/v1/user/',authRouter)
 app.use('/api/v1/url/',urlRouter)
 app.use('/api/v1/analytics/',analyticRouter)
-app.use('/',urlRouter)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc))
+app.use('/',urlRouter)
 app.use(errorHandler) 
 
 export { app };
