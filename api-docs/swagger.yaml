@@ -1,0 +1,506 @@
+openapi: 3.0.0
+info:
+  title: URL Management and Analytics API
+  version: 1.0.0
+  description: API to manage URL shortening, Google OAuth authentication, and analytics data including clicks and unique users.
+servers:
+  - url: '/api/v1'
+
+paths:
+  /user/auth/google:
+    get:
+      summary: Get Google authentication URL
+      description: Retrieves the Google authentication URL for the user to log in using Google OAuth.
+      operationId: getGoogleAuthUrl
+      responses:
+        '200':
+          description: Successful retrieval of Google authentication URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    description: The Google authentication URL.
+                    example: "https://accounts.google.com/o/oauth2/v2/auth?client_id=YOUR_CLIENT_ID"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /user/auth/google/callback:
+    get:
+      summary: Google authentication callback
+      description: Handles the callback from Google OAuth and authenticates the user.
+      operationId: googleAuthCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: The authorization code returned by Google OAuth.
+          schema:
+            type: string
+            example: "4/0AX4XfWhKJX_mJxxRzElfiQKtUoIb9YUPg3Fwvq9vGjJ3Xv5veZfQUVWxw7a85TfRl5d9Ik"
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                    example: "Authentication successful"
+                  user:
+                    type: object
+                    description: The authenticated user's information
+                    properties:
+                      id:
+                        type: string
+                        example: "123456789"
+                      name:
+                        type: string
+                        example: "John Doe"
+                  tokens:
+                    type: object
+                    description: Tokens for authentication
+                    properties:
+                      access_token:
+                        type: string
+                        example: "access_token_example"
+                      refresh_token:
+                        type: string
+                        example: "refresh_token_example"
+        '400':
+          description: Bad request - Missing or invalid code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Bad Request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /url/{short}:
+    get:
+      summary: Redirects to the long URL from the shortened URL
+      description: Redirects the user to the original long URL based on the shortened URL and logs analytics data like IP address, device, and OS.
+      operationId: redirectToLongUrl
+      parameters:
+        - name: short
+          in: path
+          required: true
+          description: The shortened URL alias.
+          schema:
+            type: string
+            example: "abc123"
+      responses:
+        '302':
+          description: Successfully redirected to the long URL
+          headers:
+            Location:
+              description: The long URL to which the user is redirected
+              schema:
+                type: string
+                example: "https://example.com"
+        '400':
+          description: Bad request - Invalid alias
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Bad request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /url/shorten:
+    post:
+      summary: Shorten a long URL
+      description: Creates a shortened URL for a provided long URL, with optional custom alias and topic.
+      operationId: shortenUrl
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: The URL data to be shortened.
+          schema:
+            type: object
+            required:
+              - longUrl
+            properties:
+              longUrl:
+                type: string
+                description: The long URL to shorten.
+                example: "https://example.com/long-url"
+              customAlias:
+                type: string
+                description: Custom alias for the shortened URL.
+                example: "tech-news"
+              topic:
+                type: string
+                description: The topic of the URL.
+                example: "Technology"
+      responses:
+        '200':
+          description: Successfully created shortened URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                    example: "success"
+                  shortUrl:
+                    type: string
+                    description: The shortened URL.
+                    example: "https://short.ly/xyz123"
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: The creation date of the shortened URL.
+                    example: "2025-01-16T12:00:00Z"
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Bad Request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /overall:
+    get:
+      summary: Get overall analytics data for all URLs
+      description: Retrieves detailed analytics for all URLs, including total clicks, unique users, clicks by date, OS type, and device type.
+      operationId: getOverallAnalytics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval of overall analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalClicks:
+                    type: integer
+                    description: The total number of clicks for all URLs.
+                    example: 2000
+                  uniqueUsers:
+                    type: integer
+                    description: The total number of unique users for all URLs.
+                    example: 1500
+                  clicksByDate:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          description: The date in YYYY-MM-DD format.
+                          example: "2025-01-16"
+                        totalClicks:
+                          type: integer
+                          description: The total number of clicks for the URLs on that specific date.
+                          example: 100
+                  osType:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        os_name:
+                          type: string
+                          description: The name of the operating system used for clicks.
+                          example: "Windows"
+                        uniqueClicks:
+                          type: integer
+                          description: The number of unique clicks for the OS.
+                          example: 500
+                        uniqueUsers:
+                          type: integer
+                          description: The number of unique users for the OS.
+                          example: 450
+                  deviceType:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        device_name:
+                          type: string
+                          description: The name of the device used for clicks.
+                          example: "iPhone"
+                        uniqueClicks:
+                          type: integer
+                          description: The number of unique clicks for the device.
+                          example: 400
+                        uniqueUsers:
+                          type: integer
+                          description: The number of unique users for the device.
+                          example: 350
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Bad Request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /analytics/topic/{topic}:
+    get:
+      summary: Retrieve analytics data for a specific topic
+      description: Retrieves detailed analytics for a specific shortened URL associated with a particular topic, including total clicks, unique users, clicks by date, OS type, and device type.
+      operationId: getAnalyticsForTopic
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          description: The topic to filter the shortened URL by.
+          schema:
+            type: string
+            example: "Technology"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval of analytics data for the specified topic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalClicks:
+                    type: integer
+                    description: Total number of clicks for the specified topic.
+                    example: 500
+                  uniqueUsers:
+                    type: integer
+                    description: Total number of unique users for the specified topic.
+                    example: 450
+                  clicksByDate:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          description: The date in YYYY-MM-DD format.
+                          example: "2025-01-16"
+                        totalClicks:
+                          type: integer
+                          description: The total number of clicks for the topic on that specific date.
+                          example: 50
+                  osType:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        os_name:
+                          type: string
+                          description: The OS type of the user.
+                          example: "Windows"
+                        uniqueClicks:
+                          type: integer
+                          description: The number of unique clicks for the OS.
+                          example: 200
+                        uniqueUsers:
+                          type: integer
+                          description: The number of unique users for the OS.
+                          example: 180
+                  deviceType:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        device_name:
+                          type: string
+                          description: The device type of the user.
+                          example: "iPhone"
+                        uniqueClicks:
+                          type: integer
+                          description: The number of unique clicks for the device.
+                          example: 150
+                        uniqueUsers:
+                          type: integer
+                          description: The number of unique users for the device.
+                          example: 130
+        '400':
+          description: Bad request - Invalid topic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Invalid topic"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+  /analytics/{alias}:
+    get:
+      summary: Retrieve analytics data for a specific shortened URL
+      description: Retrieves detailed analytics for a specified shortened URL, including total clicks, unique users, clicks by date, OS type, and device type.
+      operationId: getAnalyticsForUrl
+      parameters:
+        - name: alias
+          in: path
+          required: true
+          description: The alias of the shortened URL.
+          schema:
+            type: string
+            example: "abc123"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval of analytics data for the specified alias
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalClicks:
+                    type: integer
+                    description: The total number of clicks for the specified shortened URL.
+                    example: 1000
+                  uniqueUsers:
+                    type: integer
+                    description: The total number of unique users (based on IP address) for the specified URL.
+                    example: 900
+                  clicksByDate:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          description: The date in YYYY-MM-DD format.
+                          example: "2025-01-16"
+                        totalClicks:
+                          type: integer
+                          description: The total number of clicks for the URL on that specific date.
+                          example: 100
+                  urls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                          description: The topic associated with the shortened URL.
+                          example: "Technology"
+                        totalClicks:
+                          type: integer
+                          description: The total number of clicks for URLs within the same topic.
+                          example: 500
+                        uniqueUsers:
+                          type: integer
+                          description: The total number of unique users (based on IP address) for the topic.
+                          example: 450
+        '400':
+          description: Bad request - Invalid alias or other input errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating a bad request.
+                    example: "Invalid alias"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
